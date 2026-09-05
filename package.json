@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:cloudflare": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@opennextjs/cloudflare": "^1.20.6",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
@@ -18,7 +22,7 @@
     "framer-motion": "^13.1.0",
     "jose": "^6.2.9",
     "lucide-react": "^1.32.0",
-    "next": "16.3.1",
+    "next": "^16.3.3",
     "pg": "^8.23.0",
     "pg-cloudflare": "^1.4.0",
     "react": "19.2.8",
@@ -27,12 +31,13 @@
     "react-icons": "^5.7.0",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.6.0",
+    "wrangler": "^4.129.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "^16.3.3",
     "prisma": "^7.9.1",
     "tailwindcss": "^4"
   },
