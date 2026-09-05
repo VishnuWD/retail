@@ -64,9 +64,3 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser.
-
----
-
-## 📄 License
-
-MIT License. Built with ❤️ for modern retail stores by [pixelcode.in](https://pixelcode.in).
