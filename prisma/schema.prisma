@@ -1,0 +1,581 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  CASHIER
+  INVENTORY
+  ADMIN
+  PLATFORM_OWNER
+  SUPPORT
+  FINANCE
+  ENGINEERING
+  READ_ONLY
+}
+
+enum TransactionType {
+  PURCHASE
+  SALE
+  SALE_RETURN
+  PURCHASE_RETURN
+  ADJUSTMENT
+  DAMAGE
+  LOSS
+  TRANSFER_IN
+  TRANSFER_OUT
+  OPENING_STOCK
+}
+
+model Business {
+  id                    String                 @id @default(uuid())
+  name                  String
+  legalName             String?
+  phone                 String?
+  email                 String?
+  address               String?
+  city                  String?
+  state                 String?
+  country               String                 @default("India")
+  currency              String                 @default("INR")
+  taxNumber             String?
+  logo                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  users                 User[]
+  categories            Category[]
+  products              Product[]
+  inventories           Inventory[]
+  inventoryTransactions InventoryTransaction[]
+  customers             Customer[]
+  customerLedgers       CustomerLedger[]
+  invoiceSequence       InvoiceSequence?
+  sales                 Sale[]
+  saleReturns           SaleReturn[]
+  auditLogs             AuditLog[]
+  suppliers             Supplier[]
+  supplierLedgers       SupplierLedger[]
+  purchaseOrders        PurchaseOrder[]
+  supplierPayments      SupplierPayment[]
+  subscription          Subscription?
+  apiKeys               ApiKey[]
+  webhookSubscriptions  WebhookSubscription[]
+  automationRules       AutomationRule[]
+  ocrInvoices           SupplierInvoiceOCR[]
+  capabilities          Json?                  // Configured business capability profile
+  customFields          Json?                  // Custom field definitions
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  name                  String
+  email                 String                 @unique
+  password              String                 // Password hash
+  role                  Role                   @default(OWNER)
+  businessId            String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  business              Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  inventoryTransactions InventoryTransaction[]
+  customerLedgers       CustomerLedger[]
+  sales                 Sale[]
+  saleReturns           SaleReturn[]
+  auditLogs             AuditLog[]
+  supplierLedgers       SupplierLedger[]
+  purchaseOrders        PurchaseOrder[]
+  supplierPayments      SupplierPayment[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products    Product[]
+  
+  @@unique([businessId, name])
+}
+
+model Product {
+  id                    String                 @id @default(uuid())
+  businessId            String
+  categoryId            String
+  name                  String
+  description           String?
+  brand                 String?
+  sku                   String?
+  barcode               String?
+  imageUrl              String?
+  purchasePrice         Float                  @default(0.0)
+  sellingPrice          Float                  @default(0.0)
+  taxRate               Float                  @default(0.0)
+  unit                  String                 @default("piece")
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  
+  business              Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category              Category               @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  inventory             Inventory?
+  inventoryTransactions InventoryTransaction[]
+  saleItems             SaleItem[]
+  purchaseItems         PurchaseOrderItem[]
+  customData            Json?                  // Key-value custom fields values
+  variants              ProductVariant[]
+
+
+  @@unique([businessId, sku])
+  @@unique([businessId, barcode])
+}
+
+model Inventory {
+  id                 String   @id @default(uuid())
+  businessId         String
+  productId          String   @unique
+  quantity           Int      @default(0)
+  lowStockThreshold  Int      @default(10)
+  reorderQuantity    Int      @default(20)
+  updatedAt          DateTime @updatedAt
+  
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model InventoryTransaction {
+  id             String          @id @default(uuid())
+  businessId     String
+  productId      String
+  type           TransactionType
+  quantity       Int
+  referenceType  String?
+  referenceId    String?
+  note           String?
+  createdBy      String
+  createdAt      DateTime        @default(now())
+  
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+}
+
+enum SaleStatus {
+  COMPLETED
+  CANCELLED
+  RETURNED
+  PARTIALLY_RETURNED
+}
+
+enum PaymentStatus {
+  PAID
+  PARTIAL
+  UNPAID
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  CREDIT
+  OTHER
+}
+
+enum CustomerLedgerType {
+  CREDIT
+  PAYMENT
+  REFUND
+  CHARGE
+}
+
+model Customer {
+  id                String           @id @default(uuid())
+  businessId        String
+  name              String
+  phone             String?
+  email             String?
+  address           String?
+  outstandingCredit Float            @default(0.0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  business          Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales             Sale[]
+  ledgers           CustomerLedger[]
+  customData        Json?            // Key-value custom fields values
+
+
+  @@unique([businessId, phone])
+}
+
+model CustomerLedger {
+  id            String             @id @default(uuid())
+  businessId    String
+  customerId    String
+  type          CustomerLedgerType
+  amount        Float
+  balanceAfter  Float
+  referenceType String?            // 'SALE', 'RETURN', or 'MANUAL'
+  referenceId   String?
+  note          String?
+  createdBy     String
+  createdAt     DateTime           @default(now())
+
+  business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+}
+
+model InvoiceSequence {
+  id         String   @id @default(uuid())
+  businessId String   @unique
+  prefix     String   @default("INV-YYYY-")
+  nextValue  Int      @default(1)
+  
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Sale {
+  id             String          @id @default(uuid())
+  businessId     String
+  invoiceNumber  String
+  customerId     String?
+  subtotal       Float
+  discountAmount Float
+  taxableAmount  Float
+  taxAmount      Float
+  totalAmount    Float
+  paidAmount     Float
+  dueAmount      Float
+  status         SaleStatus      @default(COMPLETED)
+  paymentStatus  PaymentStatus   @default(PAID)
+  createdBy      String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  user           User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  items          SaleItem[]
+  payments       SalePayment[]
+  returns        SaleReturn[]
+
+  @@unique([businessId, invoiceNumber])
+}
+
+model SaleItem {
+  id                  String           @id @default(uuid())
+  saleId              String
+  productId           String?
+  productNameSnapshot String
+  skuSnapshot         String?
+  barcodeSnapshot     String?
+  quantity            Int
+  unitPrice           Float
+  discountAmount      Float            @default(0.0)
+  taxRate             Float            @default(0.0)
+  taxAmount           Float            @default(0.0)
+  lineTotal           Float
+
+  sale                Sale             @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product             Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  returnItems         SaleReturnItem[]
+}
+
+model SalePayment {
+  id            String        @id @default(uuid())
+  saleId        String
+  method        PaymentMethod
+  amount        Float
+  reference     String?
+  provider      String?       // Razorpay, Cashfree, Stripe, etc.
+  transactionId String?       // External transaction reference
+  createdAt     DateTime      @default(now())
+
+  sale          Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, transactionId])
+}
+
+model SaleReturn {
+  id           String           @id @default(uuid())
+  businessId   String
+  saleId       String
+  returnNumber String
+  refundAmount Float
+  refundMethod PaymentMethod    @default(CASH)
+  note         String?
+  createdBy    String
+  createdAt    DateTime         @default(now())
+
+  business     Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sale         Sale             @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  items        SaleReturnItem[]
+
+  @@unique([businessId, returnNumber])
+}
+
+model SaleReturnItem {
+  id           String     @id @default(uuid())
+  saleReturnId String
+  saleItemId   String
+  quantity     Int
+  unitPrice    Float
+  refundAmount Float
+
+  saleReturn   SaleReturn @relation(fields: [saleReturnId], references: [id], onDelete: Cascade)
+  saleItem     SaleItem   @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  businessId String
+  userId     String
+  action     String
+  details    String
+  createdAt  DateTime @default(now())
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum PurchasePaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+enum SupplierLedgerType {
+  CREDIT
+  PAYMENT
+  REFUND
+  CHARGE
+}
+
+model Supplier {
+  id            String            @id @default(uuid())
+  businessId    String
+  name          String
+  companyName   String?
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  state         String?
+  taxNumber     String?
+  notes         String?
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  business      Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+  payments      SupplierPayment[]
+  ledgers       SupplierLedger[]
+
+  @@index([businessId])
+}
+
+model SupplierLedger {
+  id           String             @id @default(uuid())
+  businessId   String
+  supplierId   String
+  type         SupplierLedgerType
+  amount       Float              // Positive = credit/purchase, Negative = debit/payment
+  balanceAfter Float              // Outstanding balance after transaction
+  referenceType String?           // 'PURCHASE' or 'PAYMENT' or 'MANUAL'
+  referenceId  String?
+  note         String?
+  createdBy    String
+  createdAt    DateTime           @default(now())
+
+  business     Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier     Supplier           @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+}
+
+model PurchaseOrder {
+  id                    String               @id @default(uuid())
+  businessId            String
+  supplierId            String
+  purchaseOrderNumber   String               // PO-2026-000001
+  supplierInvoiceNumber String?              // Invoice number from supplier
+  status                PurchaseOrderStatus  @default(DRAFT)
+  paymentStatus         PurchasePaymentStatus @default(UNPAID)
+  subtotal              Float
+  discountAmount        Float                @default(0.0)
+  taxAmount             Float                @default(0.0)
+  totalAmount           Float
+  paidAmount            Float                @default(0.0)
+  dueAmount             Float
+  notes                 String?
+  expectedDate          DateTime?
+  purchaseDate          DateTime             @default(now())
+  createdBy             String
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  business              Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier              Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  user                  User                 @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  items                 PurchaseOrderItem[]
+  payments              SupplierPayment[]
+
+  @@unique([businessId, purchaseOrderNumber])
+  @@index([businessId])
+  @@index([supplierId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model PurchaseOrderItem {
+  id                  String        @id @default(uuid())
+  purchaseOrderId     String
+  productId           String?
+  productNameSnapshot String
+  skuSnapshot         String?
+  orderedQuantity     Int
+  receivedQuantity    Int           @default(0)
+  unitCost            Float
+  discountAmount      Float         @default(0.0)
+  taxRate             Float         @default(0.0)
+  taxAmount           Float         @default(0.0)
+  lineTotal           Float
+
+  purchaseOrder       PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product             Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model SupplierPayment {
+  id              String        @id @default(uuid())
+  businessId      String
+  supplierId      String
+  purchaseOrderId String?
+  amount          Float
+  method          PaymentMethod
+  reference       String?
+  note            String?
+  createdBy       String
+  createdAt       DateTime      @default(now())
+
+  business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier        Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  user            User          @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+}
+
+model Subscription {
+  id                 String     @id @default(uuid())
+  businessId         String     @unique
+  plan               String     @default("FREE") // FREE, STARTER, GROWTH, PRO, ENTERPRISE
+  status             String     @default("ACTIVE") // TRIALING, ACTIVE, PAST_DUE, PAUSED, CANCELLED, EXPIRED
+  currentPeriodStart DateTime   @default(now())
+  currentPeriodEnd   DateTime   @default(now())
+  limits             Json?      // Custom feature limits: products, staff, locations, sales/month, online orders, API requests, storage
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  business           Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  businessId  String
+  key         String   @unique
+  name        String
+  scopes      String[] // read:products, write:sales, read:inventory, write:inventory, read:customers, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model WebhookSubscription {
+  id          String   @id @default(uuid())
+  businessId  String
+  url         String
+  secret      String
+  events      String[] // product.created, inventory.changed, sale.completed, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model IdempotencyKey {
+  key        String   @id
+  response   Json?
+  createdAt  DateTime @default(now())
+}
+
+model ProductVariant {
+  id            String   @id @default(uuid())
+  productId     String
+  sku           String?
+  barcode       String?
+  size          String?
+  color         String?
+  material      String?
+  pattern       String?
+  quantity      Int      @default(0)
+  price         Float?   // variant override price
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, sku])
+  @@unique([productId, barcode])
+}
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  businessId  String
+  name        String
+  trigger     String   // SALE_COMPLETED, LOW_STOCK, STOCKOUT, CUSTOMER_OVERDUE, etc.
+  conditions  Json?    // condition check logic
+  actions     Json     // list of action scripts/parameters
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model SupplierInvoiceOCR {
+  id              String   @id @default(uuid())
+  businessId      String
+  status          String   @default("PENDING") // PENDING, EXTRACTED, REVIEWED, FAILED
+  invoiceUrl      String?
+  extractedData   Json?
+  purchaseOrderId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
