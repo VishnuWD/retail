@@ -18,7 +18,7 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'kirana_audit_logs',
   STAFF: 'kirana_staff_members',
   SETTINGS: 'kirana_store_settings',
-  INITIALIZED: 'pixelcode_seeded_catalog_v6'
+  INITIALIZED: 'pixelcode_seeded_catalog_v7'
 };
 
 // Initial Seed Dataset for Kirana Retail Store
@@ -73,7 +73,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 440,
       sellingPrice: 550,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.explicit.bing.net/th?id=OIP.17L5-nNi8ORyidglh64rSgHaHa&pid=15.1',
       isActive: true,
       description: '100% Specialty Arabica beans with dark chocolate and fig tasting notes',
       inventory: { quantity: 35, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -89,7 +89,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 102,
       sellingPrice: 125,
       taxRate: 28,
-      imageUrl: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.GyQWy5QouwITz8NZFhrEiAHaHa&pid=15.1',
       isActive: true,
       description: 'Vitalizes Body and Mind with high quality alpine ingredients',
       inventory: { quantity: 80, lowStockThreshold: 20, reorderQuantity: 48 }
@@ -105,7 +105,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 185,
       sellingPrice: 230,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.OxOfyXlZd1lkLSNCv3WsjgHaHa&pid=15.1',
       isActive: true,
       description: '100% pure cold pressed orange juice with no added sugar or preservatives',
       inventory: { quantity: 24, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -121,7 +121,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 205,
       sellingPrice: 260,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.CWJtOkZELD10TkETg0Xr0wHaHa&pid=15.1',
       isActive: true,
       description: 'Certified organic blend of healing Rama, Krishna and Vana Tulsi with green tea',
       inventory: { quantity: 42, lowStockThreshold: 12, reorderQuantity: 24 }
@@ -137,7 +137,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 38,
       sellingPrice: 50,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.lmnhnfZxTuNEREV-RPlOowHaHa&pid=15.1',
       isActive: true,
       description: 'Refreshing natural tender coconut water packed with electrolytes',
       inventory: { quantity: 60, lowStockThreshold: 15, reorderQuantity: 30 }
@@ -155,7 +155,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 46,
       sellingPrice: 60,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.IJfk-6MBt8K7mKvjR_Z_1wHaHa&pid=15.1',
       isActive: true,
       description: 'Thick, creamy Greek yogurt loaded with real strawberries and high protein',
       inventory: { quantity: 28, lowStockThreshold: 8, reorderQuantity: 18 }
@@ -171,7 +171,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 110,
       sellingPrice: 140,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.ibdjiulLbnvPIIjS6Fe9xgHaHa&pid=15.1',
       isActive: true,
       description: 'Creamy and soft delicious cheese triangles rich in calcium and vitamins',
       inventory: { quantity: 32, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -187,7 +187,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 38,
       sellingPrice: 50,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.Qrjd42CnxF7SCcG1qyjvmgHaHa&pid=15.1',
       isActive: true,
       description: 'Zero maida artisan brown bread baked with 100% whole wheat grains',
       inventory: { quantity: 20, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -203,7 +203,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 72,
       sellingPrice: 95,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.gDW43NI92tmG0cTIUrF6FAHaEc&pid=15.1',
       isActive: true,
       description: 'Nutritious antibiotic-free farm fresh organic brown eggs with golden yolks',
       inventory: { quantity: 45, lowStockThreshold: 12, reorderQuantity: 30 }
@@ -219,7 +219,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 275,
       sellingPrice: 340,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.koBL2Ozs4Rb7UqecdLTwRwHaHa&pid=15.1',
       isActive: true,
       description: 'Iconic hazelnut spread made from quality roasted hazelnuts and cocoa',
       inventory: { quantity: 22, lowStockThreshold: 6, reorderQuantity: 16 }
@@ -237,7 +237,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 48,
       sellingPrice: 60,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.x78APQ-dUBGNp2P5MNMqYgHaHa&pid=15.1',
       isActive: true,
       description: 'Intense crunch tortilla chips with fiery hot bold cheese seasoning',
       inventory: { quantity: 50, lowStockThreshold: 15, reorderQuantity: 30 }
@@ -253,7 +253,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 430,
       sellingPrice: 549,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1548848221-0c2e497ed557?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.TGnVa1l07kXlsCxHI0URqQHaHa&pid=15.1',
       isActive: true,
       description: 'Whole crunchy hazelnut in a delicious creamy filling wrapped in crisp wafer',
       inventory: { quantity: 18, lowStockThreshold: 5, reorderQuantity: 12 }
@@ -269,7 +269,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 95,
       sellingPrice: 120,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.jm4iRzmjE14vMsYZ8Fv_LwHaHa&pid=15.1',
       isActive: true,
       description: 'Crispy saddle-shaped potato chips packed in the iconic resealable tube',
       inventory: { quantity: 40, lowStockThreshold: 10, reorderQuantity: 24 }
@@ -285,7 +285,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 145,
       sellingPrice: 185,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.uH6jK59i4G5eNtzpDsDEhQHaHa&pid=15.1',
       isActive: true,
       description: 'Silky smooth milk chocolate filled with whole crunchy roasted almonds',
       inventory: { quantity: 30, lowStockThreshold: 8, reorderQuantity: 20 }
@@ -301,7 +301,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 215,
       sellingPrice: 275,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.Yimk_A8eR9I9YMsYGJ0ohAHaHa&pid=15.1',
       isActive: true,
       description: 'Handpicked California almonds roasted to perfection with Himalayan pink salt',
       inventory: { quantity: 26, lowStockThreshold: 8, reorderQuantity: 15 }
@@ -319,7 +319,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 175,
       sellingPrice: 230,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.BIYQQJ_YCLAUWW07W_ABZAHaHa&pid=15.1',
       isActive: true,
       description: 'Ripe and creamy nutrient-dense premium imported Hass avocados',
       inventory: { quantity: 18, lowStockThreshold: 5, reorderQuantity: 12 }
@@ -335,7 +335,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 42,
       sellingPrice: 60,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.dwo4PCh9r6BXW7rBTLhp0wHaHa&pid=15.1',
       isActive: true,
       description: 'Tender pesticide-free baby spinach leaves grown in hydroponic vertical farms',
       inventory: { quantity: 25, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -351,7 +351,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 160,
       sellingPrice: 210,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.bn-t44YHl3SmJ6p_F5cEZAHaJO&pid=15.1',
       isActive: true,
       description: 'Crisp, sweet, and juicy handpicked Washington Red Delicious apples',
       inventory: { quantity: 30, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -369,7 +369,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 840,
       sellingPrice: 1099,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.jeGCgDa3-5k9ixzX-lOCdgHaHa&pid=15.1',
       isActive: true,
       description: 'First cold pressed extra virgin olive oil made from Mediterranean olives',
       inventory: { quantity: 15, lowStockThreshold: 4, reorderQuantity: 10 }
@@ -385,7 +385,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 170,
       sellingPrice: 225,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.zqFAcnREkI7pNpcCSwcOzgHaHa&pid=15.1',
       isActive: true,
       description: 'Authentic Italian pasta crafted with high protein durum wheat semolina',
       inventory: { quantity: 36, lowStockThreshold: 10, reorderQuantity: 24 }
@@ -401,7 +401,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 375,
       sellingPrice: 460,
       taxRate: 0,
-      imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.9rqB53vgJEJIxDdJSWrHRQHaHa&pid=15.1',
       isActive: true,
       description: 'Aromatic aged long grain basmati rice perfect for daily biryanis and pulao',
       inventory: { quantity: 28, lowStockThreshold: 8, reorderQuantity: 18 }
@@ -417,7 +417,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 230,
       sellingPrice: 299,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.ije4h5bVih1YyOhiQTssggHaHa&pid=15.1',
       isActive: true,
       description: 'Unprocessed pure forest honey rich in antioxidants and natural enzymes',
       inventory: { quantity: 24, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -435,7 +435,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 280,
       sellingPrice: 399,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.hCADVzqEJJPo1szjL5VwcQHaHa&pid=15.1',
       isActive: true,
       description: 'Hawk inspired design wired earphones with 10mm dynamic bass drivers',
       inventory: { quantity: 25, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -451,7 +451,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 990,
       sellingPrice: 1499,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.TA0fjCXUJ3KU1o14iR91iwHaHa&pid=15.1',
       isActive: true,
       description: 'Gallium Nitride ultra compact wall charger for laptops, phones and tablets',
       inventory: { quantity: 12, lowStockThreshold: 3, reorderQuantity: 8 }
@@ -467,7 +467,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 135,
       sellingPrice: 180,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1619725002198-6a689b72f41d?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.1Bo0AcDj_qGPLuJQVVP_WwHaHa&pid=15.1',
       isActive: true,
       description: 'Longest lasting AA batteries with Powercheck technology for high-drain devices',
       inventory: { quantity: 45, lowStockThreshold: 12, reorderQuantity: 30 }
@@ -483,7 +483,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 180,
       sellingPrice: 299,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.tgSb8-0CxGyULCfsvW7_HwHaHa&pid=15.1',
       isActive: true,
       description: 'Nylon braided 100W Power Delivery high speed syncing and charging cable',
       inventory: { quantity: 30, lowStockThreshold: 8, reorderQuantity: 20 }
@@ -501,7 +501,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 165,
       sellingPrice: 225,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.5Lcu9CpATdkGkAFSIEdcCgHaHa&pid=15.1',
       isActive: true,
       description: '3-in-1 body, face and hair wash infused with micro-fine natural charcoal',
       inventory: { quantity: 20, lowStockThreshold: 5, reorderQuantity: 12 }
@@ -517,7 +517,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 420,
       sellingPrice: 549,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.1BItNXBBsrpmvLCZy7VhLQHaF-&pid=15.1',
       isActive: true,
       description: 'Restores hair strength, density, shine and prevents split ends with Ceramide',
       inventory: { quantity: 16, lowStockThreshold: 4, reorderQuantity: 10 }
@@ -533,7 +533,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 165,
       sellingPrice: 219,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.3U4QcehMUT-MGgd7I4xgJQHaJ4&pid=15.1',
       isActive: true,
       description: '99.9% germ protection handwash enriched with added moisturizers',
       inventory: { quantity: 35, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -549,7 +549,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 175,
       sellingPrice: 220,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.p-SBhEYLZYjWTod5Ey2sVwHaHa&pid=15.1',
       isActive: true,
       description: 'Clinically proven fast relief from tooth sensitivity within 60 seconds',
       inventory: { quantity: 40, lowStockThreshold: 10, reorderQuantity: 25 }
@@ -567,7 +567,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 360,
       sellingPrice: 460,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.rT_ikqWsmYhwowueX7RT8wHaHa&pid=15.1',
       isActive: true,
       description: 'Tough stain removal in 1 wash with pleasant long-lasting fresh fragrance',
       inventory: { quantity: 22, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -583,7 +583,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 82,
       sellingPrice: 105,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts4.mm.bing.net/th?id=OIP.wAek7wVHLizulvgXKsh4AAHaHa&pid=15.1',
       isActive: true,
       description: 'Shine boosters formula for streak-free sparkling glass and shiny surfaces',
       inventory: { quantity: 30, lowStockThreshold: 8, reorderQuantity: 20 }
@@ -599,7 +599,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 135,
       sellingPrice: 175,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts2.mm.bing.net/th?id=OIP.TN8pn2wA9PV3Ymv2PQvGDQHaHa&pid=15.1',
       isActive: true,
       description: 'Unique power gel technology keeps bathrooms fragrant for up to 30 days',
       inventory: { quantity: 38, lowStockThreshold: 10, reorderQuantity: 25 }
@@ -617,7 +617,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 2350,
       sellingPrice: 2999,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.1CGBZ3DNSLvyFmraVEYKxgHaK3&pid=15.1',
       isActive: true,
       description: '27g pure protein per scoop with 5.9g BCAAs and zero added sugar',
       inventory: { quantity: 10, lowStockThreshold: 3, reorderQuantity: 6 }
@@ -633,7 +633,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 275,
       sellingPrice: 350,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts3.mm.bing.net/th?id=OIP.Gwz7aumiGql5ZW1BcmYEJAHaHa&pid=15.1',
       isActive: true,
       description: 'Natural Amla extract 1000mg Vitamin C with Zinc for daily immune health',
       inventory: { quantity: 35, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -651,7 +651,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 215,
       sellingPrice: 280,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.om5pz-bW9sNvaPRMtUsp3gHaHa&pid=15.1',
       isActive: true,
       description: 'High brightness 70 GSM elemental chlorine free paper with twin wire spiral binding',
       inventory: { quantity: 24, lowStockThreshold: 6, reorderQuantity: 16 }
@@ -667,7 +667,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 185,
       sellingPrice: 240,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ts1.mm.bing.net/th?id=OIP.e__GQBcNxXNnkuSoepiv6wHaHa&pid=15.1',
       isActive: true,
       description: 'Super Ink fade proof, waterproof 0.7mm stainless steel roller ball pens',
       inventory: { quantity: 30, lowStockThreshold: 8, reorderQuantity: 20 }
@@ -1038,7 +1038,7 @@ class KiranaStorageEngine {
     const initializedVersion = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     const existingProducts = this.getItem(STORAGE_KEYS.PRODUCTS);
     
-    if (initializedVersion !== 'pixelcode_seeded_catalog_v6' || !existingProducts || existingProducts.length === 0) {
+    if (initializedVersion !== 'pixelcode_seeded_catalog_v7' || !existingProducts || existingProducts.length === 0) {
       this.resetToDefault();
     }
   }
@@ -1058,7 +1058,7 @@ class KiranaStorageEngine {
     this.setItem(STORAGE_KEYS.PURCHASE_ORDERS, INITIAL_SEED_DATA.purchases);
     this.setItem(STORAGE_KEYS.EXPENSES, INITIAL_SEED_DATA.expenses);
     this.setItem(STORAGE_KEYS.AUDIT_LOGS, INITIAL_SEED_DATA.auditLogs);
-    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'pixelcode_seeded_catalog_v6');
+    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'pixelcode_seeded_catalog_v7');
     console.log('✅ pixelcode.in Local Storage initialized with new multi-category catalog');
   }
 
