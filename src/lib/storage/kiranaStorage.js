@@ -18,7 +18,7 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'kirana_audit_logs',
   STAFF: 'kirana_staff_members',
   SETTINGS: 'kirana_store_settings',
-  INITIALIZED: 'pixelcode_seeded_catalog_v5'
+  INITIALIZED: 'pixelcode_seeded_catalog_v6'
 };
 
 // Initial Seed Dataset for Kirana Retail Store
@@ -73,7 +73,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 440,
       sellingPrice: 550,
       taxRate: 5,
-      imageUrl: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: '100% Specialty Arabica beans with dark chocolate and fig tasting notes',
       inventory: { quantity: 35, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -171,7 +171,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 110,
       sellingPrice: 140,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Creamy and soft delicious cheese triangles rich in calcium and vitamins',
       inventory: { quantity: 32, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -219,7 +219,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 275,
       sellingPrice: 340,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Iconic hazelnut spread made from quality roasted hazelnuts and cocoa',
       inventory: { quantity: 22, lowStockThreshold: 6, reorderQuantity: 16 }
@@ -237,7 +237,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 48,
       sellingPrice: 60,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Intense crunch tortilla chips with fiery hot bold cheese seasoning',
       inventory: { quantity: 50, lowStockThreshold: 15, reorderQuantity: 30 }
@@ -269,7 +269,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 95,
       sellingPrice: 120,
       taxRate: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Crispy saddle-shaped potato chips packed in the iconic resealable tube',
       inventory: { quantity: 40, lowStockThreshold: 10, reorderQuantity: 24 }
@@ -533,7 +533,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 165,
       sellingPrice: 219,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1608248597359-0a6fef65099f?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: '99.9% germ protection handwash enriched with added moisturizers',
       inventory: { quantity: 35, lowStockThreshold: 10, reorderQuantity: 20 }
@@ -549,7 +549,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 175,
       sellingPrice: 220,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1559591937-e1032c525f0c?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Clinically proven fast relief from tooth sensitivity within 60 seconds',
       inventory: { quantity: 40, lowStockThreshold: 10, reorderQuantity: 25 }
@@ -567,7 +567,7 @@ export const INITIAL_SEED_DATA = {
       purchasePrice: 360,
       sellingPrice: 460,
       taxRate: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&auto=format&fit=crop&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400&auto=format&fit=crop&q=80',
       isActive: true,
       description: 'Tough stain removal in 1 wash with pleasant long-lasting fresh fragrance',
       inventory: { quantity: 22, lowStockThreshold: 6, reorderQuantity: 15 }
@@ -1038,7 +1038,7 @@ class KiranaStorageEngine {
     const initializedVersion = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     const existingProducts = this.getItem(STORAGE_KEYS.PRODUCTS);
     
-    if (initializedVersion !== 'pixelcode_seeded_catalog_v5' || !existingProducts || existingProducts.length === 0) {
+    if (initializedVersion !== 'pixelcode_seeded_catalog_v6' || !existingProducts || existingProducts.length === 0) {
       this.resetToDefault();
     }
   }
@@ -1058,7 +1058,7 @@ class KiranaStorageEngine {
     this.setItem(STORAGE_KEYS.PURCHASE_ORDERS, INITIAL_SEED_DATA.purchases);
     this.setItem(STORAGE_KEYS.EXPENSES, INITIAL_SEED_DATA.expenses);
     this.setItem(STORAGE_KEYS.AUDIT_LOGS, INITIAL_SEED_DATA.auditLogs);
-    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'pixelcode_seeded_catalog_v5');
+    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'pixelcode_seeded_catalog_v6');
     console.log('✅ pixelcode.in Local Storage initialized with new multi-category catalog');
   }
 
