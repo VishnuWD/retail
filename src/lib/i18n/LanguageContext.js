@@ -19,6 +19,15 @@ const PACK_TYPE_TRANSLATIONS = {
   kn: 'ಪ್ಯಾಕ್ ಪ್ರಕಾರ'
 };
 
+export const AVAILABLE_LANGUAGES = [
+  { code: 'en', label: 'English', nativeName: 'English', region: 'India / International', flag: '🇬🇧' },
+  { code: 'hi', label: 'Hindi', nativeName: 'हिन्दी', region: 'उत्तर भारत', flag: '🇮🇳' },
+  { code: 'mr', label: 'Marathi', nativeName: 'मराठी', region: 'महाराष्ट्र', flag: '🇮🇳' },
+  { code: 'ta', label: 'Tamil', nativeName: 'தமிழ்', region: 'தமிழ்நாடு', flag: '🇮🇳' },
+  { code: 'te', label: 'Telugu', nativeName: 'తెలుగు', region: 'ఆంధ్రప్రదేశ్ & తెలంగాణ', flag: '🇮🇳' },
+  { code: 'kn', label: 'Kannada', nativeName: 'ಕನ್ನಡ', region: 'ಕರ್ನಾಟಕ', flag: '🇮🇳' },
+];
+
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
@@ -150,7 +159,7 @@ export function LanguageProvider({ children }) {
   }
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale: changeLocale, t, tp, tc, tu, tb, ts }}>
+    <LanguageContext.Provider value={{ locale, setLocale: changeLocale, languages: AVAILABLE_LANGUAGES, t, tp, tc, tu, tb, ts }}>
       {children}
     </LanguageContext.Provider>
   );

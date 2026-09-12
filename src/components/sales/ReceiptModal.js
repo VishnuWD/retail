@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Printer, FileText, Share2, X, Check, QrCode, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Printer, FileText, Share2, X, Check, QrCode, Sparkles, Copy, Download, Image as ImageIcon } from 'lucide-react';
 import { printReceiptDirectly, generateReceiptHtml } from '@/lib/printer/receiptPrinter';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatWhatsAppPhone, generateWhatsAppInvoice, openWhatsAppLink } from '@/lib/utils';
+import { downloadReceiptPng, shareReceiptImage } from '@/lib/printer/receiptCanvas';
 import { useStorage } from '@/lib/storage/StorageContext';
 
 export default function ReceiptModal({ sale, isOpen, onClose }) {
@@ -11,6 +12,18 @@ export default function ReceiptModal({ sale, isOpen, onClose }) {
   const [paperSize, setPaperSize] = useState('58mm');
   const [isPrinting, setIsPrinting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [imageToast, setImageToast] = useState(null);
+  const [targetPhone, setTargetPhone] = useState('');
+
+  const customerPhone = sale?.customer?.phone || sale?.customerPhone || '';
+
+  useEffect(() => {
+    if (customerPhone) {
+      setTargetPhone(customerPhone.replace(/\D/g, ''));
+    } else {
+      setTargetPhone('');
+    }
+  }, [customerPhone, isOpen]);
 
   if (!isOpen || !sale) return null;
 
@@ -24,7 +37,6 @@ export default function ReceiptModal({ sale, isOpen, onClose }) {
   const invoiceNumber = sale.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
   const saleDate = sale.createdAt ? new Date(sale.createdAt) : new Date();
   const customerName = sale.customer?.name || sale.customerName || 'Walk-in Customer';
-  const customerPhone = sale.customer?.phone || '';
   const cashierName = sale.user?.name || sale.createdBy || 'Store Operator';
 
   const items = sale.items || [];
@@ -45,15 +57,138 @@ export default function ReceiptModal({ sale, isOpen, onClose }) {
     setIsPrinting(false);
   };
 
-  const handleWhatsApp = () => {
-    const phone = customerPhone ? customerPhone.replace(/\D/g, '') : '';
-    const itemsText = items.map(i => `• ${i.productNameSnapshot || i.name} (x${i.quantity || 1}) - ₹${i.lineTotal || (i.unitPrice * (i.quantity || 1))}`).join('%0A');
-    const msg = `*${bizName} - Invoice #${invoiceNumber}*%0A%0A*Items:*%0A${itemsText}%0A%0A*Total Amount:* ₹${totalAmount}%0A*Status:* Completed%0A%0A${receiptFooter}`;
-    
-    const url = phone 
-      ? `https://wa.me/91${phone}?text=${msg}`
-      : `https://wa.me/?text=${msg}`;
-    window.open(url, '_blank');
+  const handleWhatsApp = (overridePhone) => {
+    const phoneToUse = overridePhone !== undefined ? overridePhone : (targetPhone || customerPhone);
+    const invoiceUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/print/${invoiceNumber}?type=a4` 
+      : '';
+
+    const { url } = generateWhatsAppInvoice({
+      phone: phoneToUse,
+      invoiceNumber,
+      storeName: bizName,
+      storePhone: bizPhone,
+      items,
+      subtotal,
+      discount: discountAmount,
+      tax: taxAmount,
+      total: totalAmount,
+      customerName,
+      date: saleDate,
+      upiId: bizUpi,
+      footerNote: receiptFooter,
+      invoiceUrl
+    });
+    openWhatsAppLink(url);
+  };
+
+  const handleShare = async () => {
+    const phoneToUse = targetPhone || customerPhone;
+    const invoiceUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/print/${invoiceNumber}?type=a4` 
+      : '';
+    const shareTitle = `Receipt #${invoiceNumber} - ${bizName}`;
+    const shareText = `🧾 Bill #${invoiceNumber}\nStore: ${bizName}\nCustomer: ${customerName}\nTotal: ₹${totalAmount}\nView Invoice: ${invoiceUrl}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: invoiceUrl
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    handleWhatsApp(phoneToUse);
+  };
+
+  const handleShareImage = async () => {
+    const phoneToUse = targetPhone || customerPhone;
+    const invoiceUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/print/${invoiceNumber}?type=a4` 
+      : '';
+
+    const saleData = {
+      storeName: bizName,
+      storeAddress: bizAddress,
+      storePhone: bizPhone,
+      storeGstin: bizGstin,
+      invoiceNumber,
+      customerName,
+      customerPhone: phoneToUse,
+      items,
+      subtotal,
+      discount: discountAmount,
+      tax: taxAmount,
+      total: totalAmount,
+      date: saleDate,
+      footerNote: receiptFooter
+    };
+
+    const { url } = generateWhatsAppInvoice({
+      ...saleData,
+      phone: phoneToUse,
+      invoiceUrl
+    });
+
+    const res = await shareReceiptImage(saleData, url);
+    if (res === 'shared') {
+      setImageToast('Receipt image shared!');
+    } else if (res === 'copied') {
+      setImageToast('Receipt image copied! Press Ctrl+V in WhatsApp to send.');
+    }
+    setTimeout(() => setImageToast(null), 4000);
+  };
+
+  const handleDownloadPng = () => {
+    downloadReceiptPng({
+      storeName: bizName,
+      storeAddress: bizAddress,
+      storePhone: bizPhone,
+      storeGstin: bizGstin,
+      invoiceNumber,
+      customerName,
+      customerPhone: targetPhone || customerPhone,
+      items,
+      subtotal,
+      discount: discountAmount,
+      tax: taxAmount,
+      total: totalAmount,
+      date: saleDate,
+      footerNote: receiptFooter
+    });
+  };
+
+  const handleCopyText = () => {
+    const invoiceUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/print/${invoiceNumber}?type=a4` 
+      : '';
+
+    const { text } = generateWhatsAppInvoice({
+      phone: targetPhone || customerPhone,
+      invoiceNumber,
+      storeName: bizName,
+      storePhone: bizPhone,
+      items,
+      subtotal,
+      discount: discountAmount,
+      tax: taxAmount,
+      total: totalAmount,
+      customerName,
+      date: saleDate,
+      upiId: bizUpi,
+      footerNote: receiptFooter,
+      invoiceUrl
+    });
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const openA4Page = () => {
@@ -220,27 +355,55 @@ export default function ReceiptModal({ sale, isOpen, onClose }) {
           </div>
         </div>
 
+        {/* Toast notification if shared/copied */}
+        {imageToast && (
+          <div className="px-4 py-2 bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center justify-center gap-1.5 border-t border-emerald-200 animate-in fade-in">
+            <Check size={14} className="text-emerald-600" />
+            <span>{imageToast}</span>
+          </div>
+        )}
+
         {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex gap-2">
+        <div className="p-3 sm:p-4 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <button
-              onClick={handleWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-colors shadow-xs"
+              type="button"
+              onClick={handleShare}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              title="Share Bill via WhatsApp or System Share"
             >
-              <Share2 size={14} className="text-emerald-600" /> WhatsApp
+              <Share2 size={14} className="text-emerald-600" /> Share Bill
             </button>
             <button
+              type="button"
               onClick={openA4Page}
-              className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors shadow-xs"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
             >
               <FileText size={14} className="text-indigo-600" /> A4 Tax Invoice
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPng}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              title="Download PNG image"
+            >
+              <Download size={13} className="text-slate-600" /> PNG
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyText}
+              className="flex items-center justify-center gap-1 px-2.5 py-2 text-slate-500 hover:text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              title="Copy receipt text to clipboard"
+            >
+              {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+              <span>{copied ? 'Copied!' : 'Copy'}</span>
             </button>
           </div>
 
           <button
             onClick={handlePrint}
             disabled={isPrinting}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold shadow-md shadow-indigo-200 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold shadow-md shadow-indigo-200 transition-all cursor-pointer disabled:opacity-50"
           >
             <Printer size={15} />
             <span>{isPrinting ? 'Printing...' : `Print Receipt (${paperSize})`}</span>

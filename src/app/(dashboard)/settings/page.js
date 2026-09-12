@@ -15,7 +15,8 @@ import {
   UserPlus, 
   Trash2, 
   KeyRound, 
-  X 
+  X,
+  Globe
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
@@ -58,7 +59,7 @@ const INDUSTRY_PROFILES = {
 };
 
 export default function SettingsPage() {
-  const { t } = useLanguage();
+  const { locale, setLocale, languages, t } = useLanguage();
   const { 
     storageMode, 
     setStorageMode, 
@@ -430,6 +431,54 @@ export default function SettingsPage() {
                   <option value="Network">WiFi / LAN Network Print IP</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Language & Regional Localization Card */}
+          <div className="depth-surface rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <Globe size={18} className="text-indigo-600" /> Language & Regional Localization
+              </h3>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                6 Regional Languages
+              </span>
+            </div>
+            
+            <p className="text-xs text-slate-500 font-medium">
+              Select your primary interface language. Navigation tabs, POS billing terms, category classifications, and receipts will immediately adapt to the chosen language.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+              {languages?.map((lang) => {
+                const isSelected = locale === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => setLocale(lang.code)}
+                    className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-600'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-lg">{lang.flag}</span>
+                      {isSelected && <Check size={14} className="text-indigo-600 font-bold" />}
+                    </div>
+                    <span className="mt-2 text-sm font-extrabold text-slate-900 leading-tight">
+                      {lang.nativeName}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                      {lang.label}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-1 truncate max-w-full">
+                      {lang.region}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

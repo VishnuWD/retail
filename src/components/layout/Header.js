@@ -33,17 +33,17 @@ import StorageManagerModal from '@/components/ui/StorageManagerModal';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 
 const ALL_NAV_ITEMS = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
-  { name: 'Products', href: '/products', icon: Package, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
-  { name: 'Inventory', href: '/inventory', icon: Boxes, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
-  { name: 'Sales (POS)', href: '/sales/pos', icon: TrendingUp, roles: ['OWNER', 'MANAGER', 'CASHIER', 'ADMIN'] },
-  { name: 'Purchases', href: '/purchases', icon: ShoppingCart, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
-  { name: 'Customers & Khata', href: '/customers', icon: Users, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
-  { name: 'Suppliers', href: '/suppliers', icon: Truck, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
-  { name: 'Expenses', href: '/expenses', icon: CreditCard, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
-  { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
-  { name: 'AI Assistant', href: '/assistant', icon: Bot, roles: ['OWNER', 'MANAGER', 'CASHIER', 'ADMIN'] },
-  { name: 'Settings', href: '/settings', icon: Settings, roles: ['OWNER', 'ADMIN'] },
+  { name: 'Dashboard', key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
+  { name: 'Products', key: 'products', href: '/products', icon: Package, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
+  { name: 'Inventory', key: 'inventory', href: '/inventory', icon: Boxes, roles: ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY', 'ADMIN'] },
+  { name: 'Sales (POS)', key: 'sales', href: '/sales/pos', icon: TrendingUp, roles: ['OWNER', 'MANAGER', 'CASHIER', 'ADMIN'] },
+  { name: 'Purchases', key: 'purchases', href: '/purchases', icon: ShoppingCart, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
+  { name: 'Customers & Khata', key: 'customers', href: '/customers', icon: Users, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
+  { name: 'Suppliers', key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
+  { name: 'Expenses', key: 'expenses', href: '/expenses', icon: CreditCard, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
+  { name: 'Reports', key: 'reports', href: '/reports', icon: BarChart3, roles: ['OWNER', 'MANAGER', 'ADMIN'] },
+  { name: 'AI Assistant', key: 'assistant', href: '/assistant', icon: Bot, roles: ['OWNER', 'MANAGER', 'CASHIER', 'ADMIN'] },
+  { name: 'Settings', key: 'settings', href: '/settings', icon: Settings, roles: ['OWNER', 'ADMIN'] },
 ];
 
 export default function Header({ userName, userRole }) {
@@ -73,7 +73,7 @@ export default function Header({ userName, userRole }) {
 
   return (
     <>
-      <header className="no-print flex h-16 w-full items-center justify-between bg-white border-b border-slate-200 px-4 sm:px-6 z-30" data-no-print>
+      <header className="no-print flex h-16 w-full items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 z-30 shadow-2xs shadow-slate-900/5 transition-all" data-no-print>
         
         {/* Mobile menu trigger + Logo */}
         <div className="flex items-center gap-4">
@@ -105,16 +105,6 @@ export default function Header({ userName, userRole }) {
         {/* Action icons, Storage mode pill, Notifications & Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
           
-          {/* Subtle System Status Pill */}
-          <button
-            type="button"
-            onClick={() => setStorageModalOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer"
-            title="Storage & Data Engine Status"
-          >
-            <span className={`h-2 w-2 rounded-full ${storageMode === 'local' ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
-            <span>{storageMode === 'local' ? 'Offline-Ready' : 'Cloud Sync'}</span>
-          </button>
 
           {/* Quick Storefront Link */}
           <Link
@@ -133,14 +123,14 @@ export default function Header({ userName, userRole }) {
             <select
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+              className="bg-slate-50/90 hover:bg-slate-100 border border-slate-200/90 text-xs font-bold text-slate-800 rounded-xl px-2.5 py-1.5 outline-none focus:border-indigo-500 shadow-2xs cursor-pointer transition-colors"
             >
-              <option value="en">English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="mr">मराठी (Marathi)</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-              <option value="te">తెలుగు (Telugu)</option>
-              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+              <option value="mr">🇮🇳 मराठी (Marathi)</option>
+              <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+              <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+              <option value="kn">🇮🇳 ಕನ್ನಡ (Kannada)</option>
             </select>
           </div>
 
@@ -250,19 +240,20 @@ export default function Header({ userName, userRole }) {
               {navItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
+                const translatedName = t(`nav.${item.key}`, item.name);
                 return (
                   <Link
-                    key={item.name}
+                    key={item.key}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                       isActive 
-                        ? 'bg-indigo-50 text-indigo-600' 
+                        ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 shadow-xs' 
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     <Icon size={18} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
-                    <span>{item.name}</span>
+                    <span>{translatedName}</span>
                   </Link>
                 );
               })}
@@ -274,9 +265,9 @@ export default function Header({ userName, userRole }) {
                   setMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors shadow-2xs"
               >
-                <LogOut size={16} /> Sign Out
+                <LogOut size={16} /> {t('nav.signOut', 'Sign Out')}
               </button>
             </div>
           </div>

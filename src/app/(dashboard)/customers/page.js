@@ -18,7 +18,7 @@ import {
   X,
   Share2
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatWhatsAppPhone, openWhatsAppLink } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 
 export default function CustomersPage() {
@@ -124,13 +124,14 @@ export default function CustomersPage() {
 
   const triggerReminder = (customer) => {
     setReminderSentId(customer.id);
-    const rawPhone = (customer.phone || '').replace(/\D/g, '');
+    const formattedPhone = formatWhatsAppPhone(customer.phone);
     const msg = `Namaste ${customer.name}, your outstanding udhaar balance at Green Mart Kirana is ₹${(customer.outstandingCredit || 0).toFixed(2)}. Please pay at your earliest convenience via UPI: greenmart@upi. Thank you!`;
-    const url = rawPhone 
-      ? `https://wa.me/91${rawPhone}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    const encodedMsg = encodeURIComponent(msg);
+    const url = formattedPhone 
+      ? `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMsg}`
+      : `https://api.whatsapp.com/send?text=${encodedMsg}`;
     
-    window.open(url, '_blank');
+    openWhatsAppLink(url);
     setTimeout(() => {
       setReminderSentId(null);
     }, 2500);

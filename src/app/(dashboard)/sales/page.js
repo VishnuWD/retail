@@ -18,9 +18,10 @@ import {
   ChevronRight,
   Eye,
   RefreshCw,
-  Printer
+  Printer,
+  Share2
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber, generateWhatsAppInvoice, openWhatsAppLink } from '@/lib/utils';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { apiClient } from '@/lib/api-client';
@@ -137,6 +138,49 @@ export default function SalesHistoryPage() {
     } finally {
       setLoadingSummary(false);
     }
+  };
+
+  const handleShareSale = async (sale) => {
+    if (!sale) return;
+    const customerPhone = sale.customer?.phone || sale.customerPhone || '';
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${sale.invoiceNumber || sale.id}?type=a4`
+      : '';
+
+    const shareTitle = `Invoice #${sale.invoiceNumber || sale.id} - ${business?.name || 'Green Mart'}`;
+    const shareText = `🧾 Bill #${sale.invoiceNumber || sale.id}\nStore: ${business?.name || 'Green Mart'}\nCustomer: ${sale.customer?.name || 'Valued Customer'}\nTotal: ₹${sale.totalAmount}\nView Invoice: ${invoiceUrl}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: invoiceUrl
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    const { url } = generateWhatsAppInvoice({
+      phone: customerPhone,
+      invoiceNumber: sale.invoiceNumber || sale.id,
+      storeName: business?.name || 'Green Mart',
+      storePhone: business?.phone || '+91 98765 43210',
+      items: sale.items || [],
+      subtotal: sale.subtotal || sale.totalAmount,
+      discount: sale.discountAmount || 0,
+      tax: sale.taxAmount || 0,
+      total: sale.totalAmount,
+      customerName: sale.customer?.name || 'Valued Customer',
+      date: sale.createdAt || new Date(),
+      upiId: business?.upiId || '',
+      footerNote: business?.capabilities?.receiptFooter || 'Thank you for shopping with us!',
+      invoiceUrl
+    });
+
+    openWhatsAppLink(url);
   };
 
   useEffect(() => {
@@ -397,10 +441,18 @@ export default function SalesHistoryPage() {
                                 setActiveReceiptSale(sale);
                                 setReceiptModalOpen(true);
                               }}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded font-bold transition-colors text-xs"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded font-bold transition-colors text-xs cursor-pointer"
                               title="Print Thermal Slip"
                             >
                               <Printer size={12} className="text-indigo-600" /> Slip
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleShareSale(sale)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded font-bold transition-colors text-xs cursor-pointer"
+                              title="Share Bill via WhatsApp or System Share"
+                            >
+                              <Share2 size={12} className="text-emerald-600" /> Share
                             </button>
                             <Link
                               href={`/sales/${sale.id}`}

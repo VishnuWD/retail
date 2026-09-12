@@ -21,9 +21,10 @@ import {
   CheckCircle,
   X,
   CreditCard,
-  Eye
+  Eye,
+  Share2
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber, generateWhatsAppInvoice, openWhatsAppLink } from '@/lib/utils';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { apiClient } from '@/lib/api-client';
@@ -189,6 +190,49 @@ export default function SaleDetailPage({ params }) {
     window.open(`/print/${saleId}?type=a4`, '_blank', 'width=800,height=900');
   };
 
+  const handleShare = async () => {
+    if (!sale) return;
+    const customerPhone = sale.customer?.phone || sale.customerPhone || '';
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${sale.invoiceNumber || sale.id}?type=a4`
+      : '';
+
+    const shareTitle = `Invoice #${sale.invoiceNumber || sale.id} - ${business?.name || 'Green Mart'}`;
+    const shareText = `🧾 Bill #${sale.invoiceNumber || sale.id}\nStore: ${business?.name || 'Green Mart'}\nCustomer: ${sale.customer?.name || 'Valued Customer'}\nTotal: ₹${sale.totalAmount}\nView Invoice: ${invoiceUrl}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: invoiceUrl
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    const { url } = generateWhatsAppInvoice({
+      phone: customerPhone,
+      invoiceNumber: sale.invoiceNumber || sale.id,
+      storeName: business?.name || 'Green Mart',
+      storePhone: business?.phone || '+91 98765 43210',
+      items: sale.items || [],
+      subtotal: sale.subtotal || sale.totalAmount,
+      discount: sale.discountAmount || 0,
+      tax: sale.taxAmount || 0,
+      total: sale.totalAmount,
+      customerName: sale.customer?.name || 'Valued Customer',
+      date: sale.createdAt || new Date(),
+      upiId: business?.upiId || '',
+      footerNote: business?.capabilities?.receiptFooter || 'Thank you for shopping with us!',
+      invoiceUrl
+    });
+
+    openWhatsAppLink(url);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-500 gap-2 bg-slate-50 h-screen">
@@ -215,7 +259,7 @@ export default function SaleDetailPage({ params }) {
     <div className="space-y-6">
       
       {/* Back button and Header controls */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/sales" className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-100">
             <ArrowLeft size={20} />
@@ -226,7 +270,7 @@ export default function SaleDetailPage({ params }) {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {sale.status !== 'CANCELLED' && (
             <>
               <button
@@ -250,6 +294,13 @@ export default function SaleDetailPage({ params }) {
             className="flex items-center gap-1 px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-bold shadow-sm disabled:opacity-50"
           >
             <Printer size={16} /> {isPrintingDirect ? 'Printing...' : 'Direct Print'}
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-sm font-bold shadow-sm transition-all cursor-pointer"
+            title="Share Bill via WhatsApp or System Share"
+          >
+            <Share2 size={16} className="text-emerald-600" /> Share Bill
           </button>
           <button
             onClick={() => setReceiptModalOpen(true)}

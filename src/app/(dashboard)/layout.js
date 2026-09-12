@@ -8,7 +8,7 @@ export default async function DashboardLayout({ children }) {
   const userRole = headersList.get('x-user-role') || 'OWNER';
   
   return (
-    <div className="flex h-screen w-full bg-slate-50 text-slate-900 overflow-hidden">
+    <div className="flex h-screen w-full bg-[#f8fafc] bg-[radial-gradient(ellipse_80%_60%_at_50%_-15%,rgba(99,102,241,0.08),rgba(248,250,252,0))] text-slate-900 overflow-hidden">
       {/* Sidebar - Hidden on mobile, shown on md screens up */}
       <Sidebar userRole={userRole} />
 

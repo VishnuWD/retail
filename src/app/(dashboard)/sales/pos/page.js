@@ -20,9 +20,16 @@ import {
   Keyboard,
   Printer,
   Download,
-  FileText
+  FileText,
+  Zap,
+  Copy,
+  Check,
+  Image as ImageIcon,
+  ExternalLink,
+  Send
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber, formatWhatsAppPhone, generateWhatsAppInvoice, openWhatsAppLink } from '@/lib/utils';
+import { downloadReceiptPng, copyReceiptImageToClipboard, shareReceiptImage } from '@/lib/printer/receiptCanvas';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { apiClient } from '@/lib/api-client';
@@ -34,11 +41,13 @@ import ReceiptModal from '@/components/sales/ReceiptModal';
 export default function POSPage() {
   const router = useRouter();
   const { t, tp, tc, tu, tb, ts } = useLanguage();
+  const { business } = useStorage();
   
   // Search & suggestions
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [posCategory, setPosCategory] = useState('ALL');
   const searchInputRef = useRef(null);
 
   // Cart state
@@ -67,6 +76,11 @@ export default function POSPage() {
   const [completedSaleResult, setCompletedSaleResult] = useState(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [isPrintingDirect, setIsPrintingDirect] = useState(false);
+  const [whatsAppTargetPhone, setWhatsAppTargetPhone] = useState('');
+  const [copiedReceipt, setCopiedReceipt] = useState(false);
+  const [imageSharedToast, setImageSharedToast] = useState(null);
+  const [whatsAppFormat, setWhatsAppFormat] = useState('pdf'); // 'pdf' | 'image'
+  const [isSendingWhatsAppApi, setIsSendingWhatsAppApi] = useState(false);
 
   // Keyboard shortcut help
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
@@ -125,7 +139,7 @@ export default function POSPage() {
   const performSearch = async (query) => {
     setSearchLoading(true);
     try {
-      const q = new URLSearchParams({ search: query, limit: '12' });
+      const q = new URLSearchParams({ search: query, limit: query ? '24' : '48' });
       const json = await apiClient.get(`/api/products?${q.toString()}`);
       if (json.success && json.data) {
         setProducts(json.data.products || []);
@@ -421,6 +435,10 @@ export default function POSPage() {
         customer: selectedCustomer
       });
 
+      // Pre-fill phone if selected customer has phone
+      setWhatsAppTargetPhone(selectedCustomer?.phone ? selectedCustomer.phone.replace(/\D/g, '') : '');
+      setCopiedReceipt(false);
+
       setCart([]);
       setCartDiscountVal(0);
       setSelectedCustomer(null);
@@ -446,21 +464,214 @@ export default function POSPage() {
     }
   };
 
-  // WhatsApp Share Invoice generator
-  const shareWhatsAppInvoice = () => {
+  // Direct Smart Share (Web Share API or WhatsApp fallback)
+  const handleDirectShare = async () => {
     if (!completedSaleResult) return;
-    const phone = completedSaleResult.customer?.phone || '';
-    const itemsText = completedSaleResult.items.map(i => `• ${i.name} (x${i.quantity}) - ₹${i.unitPrice * i.quantity}`).join('%0A');
-    const msg = `*Green Mart Kirana - Invoice #${completedSaleResult.invoiceNumber}*%0A%0A*Items:*%0A${itemsText}%0A%0A*Total Amount:* ₹${completedSaleResult.total}%0A*Status:* Completed%0A%0AThank you for shopping with Green Mart! Call +91 98765 43210 for free home delivery.`;
+    const phoneToUse = whatsAppTargetPhone || completedSaleResult.customer?.phone || '';
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${completedSaleResult.invoiceNumber}?type=a4`
+      : '';
+
+    const shareTitle = `Receipt #${completedSaleResult.invoiceNumber} - ${business?.name || 'Green Mart'}`;
+    const shareText = `🧾 Bill #${completedSaleResult.invoiceNumber}\nStore: ${business?.name || 'Green Mart'}\nCustomer: ${completedSaleResult.customer?.name || 'Walk-in Customer'}\nTotal Paid: ₹${completedSaleResult.total}\nView Invoice: ${invoiceUrl}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: invoiceUrl
+        });
+        setImageSharedToast('Receipt shared successfully!');
+        setTimeout(() => setImageSharedToast(null), 3000);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('Native share failed, falling back to WhatsApp:', err);
+      }
+    }
+
+    shareWhatsAppInvoice(phoneToUse);
+  };
+
+  // Direct WhatsApp Send via Server API (PDF or Image)
+  const handleDirectWhatsAppSend = async (formatOverride) => {
+    if (!completedSaleResult) return;
+    const phoneToUse = whatsAppTargetPhone || completedSaleResult.customer?.phone || '';
+    if (!phoneToUse || phoneToUse.length < 10) {
+      alert('Please enter a valid 10-digit customer mobile number.');
+      return;
+    }
+
+    const fmt = formatOverride || whatsAppFormat;
+    setIsSendingWhatsAppApi(true);
+
+    try {
+      const res = await apiClient.post('/api/whatsapp/send', {
+        phone: phoneToUse,
+        invoiceNumber: completedSaleResult.invoiceNumber,
+        format: fmt,
+        sale: {
+          customerName: completedSaleResult.customer?.name || 'Walk-in Customer',
+          totalAmount: completedSaleResult.total,
+          items: completedSaleResult.items,
+          subtotal: completedSaleResult.sale?.subtotal,
+          discountAmount: completedSaleResult.sale?.discountAmount,
+          taxAmount: completedSaleResult.sale?.taxAmount
+        }
+      });
+
+      if (res.success) {
+        if (res.data?.mode === 'CLOUD_API') {
+          setImageSharedToast(`Bill ${fmt.toUpperCase()} dispatched to +${res.data.recipient} via WhatsApp!`);
+        } else {
+          // Open WhatsApp Web with the prefilled message & digital invoice link
+          if (res.data?.whatsappWebUrl) {
+            openWhatsAppLink(res.data.whatsappWebUrl);
+          }
+          setImageSharedToast(`Bill ${fmt.toUpperCase()} prepared for +${res.data.recipient}! Opened in WhatsApp.`);
+        }
+      } else {
+        throw new Error(res.error?.message || 'Failed to dispatch WhatsApp message');
+      }
+    } catch (err) {
+      console.warn('API send error, using fallback:', err.message);
+      shareWhatsAppInvoice(phoneToUse);
+    } finally {
+      setIsSendingWhatsAppApi(false);
+      setTimeout(() => setImageSharedToast(null), 5000);
+    }
+  };
+
+  // WhatsApp Share Invoice generator
+  const shareWhatsAppInvoice = (overridePhone) => {
+    if (!completedSaleResult) return;
+    const phoneToUse = overridePhone !== undefined ? overridePhone : (whatsAppTargetPhone || completedSaleResult.customer?.phone || '');
     
-    const url = phone 
-      ? `https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`
-      : `https://wa.me/?text=${msg}`;
-    window.open(url, '_blank');
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${completedSaleResult.invoiceNumber}?type=a4`
+      : '';
+
+    const { url } = generateWhatsAppInvoice({
+      phone: phoneToUse,
+      invoiceNumber: completedSaleResult.invoiceNumber,
+      storeName: business?.name || 'Green Mart Kirana',
+      storePhone: business?.phone || '+91 98765 43210',
+      items: completedSaleResult.items || [],
+      subtotal: completedSaleResult.sale?.subtotal || completedSaleResult.total,
+      discount: completedSaleResult.sale?.discountAmount || 0,
+      tax: completedSaleResult.sale?.taxAmount || 0,
+      total: completedSaleResult.total,
+      customerName: completedSaleResult.customer?.name || 'Valued Customer',
+      date: completedSaleResult.sale?.createdAt || new Date(),
+      upiId: business?.upiId || '',
+      footerNote: business?.capabilities?.receiptFooter || 'Free Home Delivery: +91 98765 43210',
+      invoiceUrl
+    });
+
+    openWhatsAppLink(url);
+  };
+
+  // Share or copy receipt as PNG Image
+  const handleShareReceiptImage = async () => {
+    if (!completedSaleResult) return;
+    const phoneToUse = whatsAppTargetPhone || completedSaleResult.customer?.phone || '';
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${completedSaleResult.invoiceNumber}?type=a4`
+      : '';
+
+    const saleData = {
+      storeName: business?.name || 'Green Mart Kirana & Superstore',
+      storeAddress: business?.address || 'Indiranagar, Bengaluru, Karnataka',
+      storePhone: business?.phone || '+91 98765 43210',
+      storeGstin: business?.taxNumber || '29ABCDE1234F1Z5',
+      invoiceNumber: completedSaleResult.invoiceNumber,
+      customerName: completedSaleResult.customer?.name || 'Walk-in Customer',
+      customerPhone: phoneToUse,
+      items: completedSaleResult.items || [],
+      subtotal: completedSaleResult.sale?.subtotal || completedSaleResult.total,
+      discount: completedSaleResult.sale?.discountAmount || 0,
+      tax: completedSaleResult.sale?.taxAmount || 0,
+      total: completedSaleResult.total,
+      date: completedSaleResult.sale?.createdAt || new Date(),
+      footerNote: business?.capabilities?.receiptFooter || 'Thank you for shopping with us! Visit again.'
+    };
+
+    const { url } = generateWhatsAppInvoice({
+      ...saleData,
+      phone: phoneToUse,
+      invoiceUrl
+    });
+
+    const res = await shareReceiptImage(saleData, url);
+    if (res === 'shared') {
+      setImageSharedToast('Receipt image shared to WhatsApp!');
+    } else if (res === 'copied') {
+      setImageSharedToast('Receipt image copied to clipboard! Press Ctrl+V in WhatsApp to send.');
+    }
+    setTimeout(() => setImageSharedToast(null), 4500);
+  };
+
+  // Download receipt PNG image file
+  const handleDownloadPng = () => {
+    if (!completedSaleResult) return;
+    downloadReceiptPng({
+      storeName: business?.name || 'Green Mart Kirana & Superstore',
+      storeAddress: business?.address || 'Indiranagar, Bengaluru, Karnataka',
+      storePhone: business?.phone || '+91 98765 43210',
+      storeGstin: business?.taxNumber || '29ABCDE1234F1Z5',
+      invoiceNumber: completedSaleResult.invoiceNumber,
+      customerName: completedSaleResult.customer?.name || 'Walk-in Customer',
+      customerPhone: whatsAppTargetPhone || completedSaleResult.customer?.phone || '',
+      items: completedSaleResult.items || [],
+      subtotal: completedSaleResult.sale?.subtotal || completedSaleResult.total,
+      discount: completedSaleResult.sale?.discountAmount || 0,
+      tax: completedSaleResult.sale?.taxAmount || 0,
+      total: completedSaleResult.total,
+      date: completedSaleResult.sale?.createdAt || new Date(),
+      footerNote: business?.capabilities?.receiptFooter || 'Thank you for shopping with us! Visit again.'
+    });
+  };
+
+  // Open A4 Tax Invoice for Print / Save as PDF
+  const handleOpenPdf = () => {
+    if (!completedSaleResult) return;
+    window.open(`/print/${completedSaleResult.invoiceNumber}?type=a4&autoprint=true`, '_blank');
+  };
+
+  // Copy structured invoice text to clipboard
+  const copyReceiptText = () => {
+    if (!completedSaleResult) return;
+    const invoiceUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/print/${completedSaleResult.invoiceNumber}?type=a4`
+      : '';
+
+    const { text } = generateWhatsAppInvoice({
+      phone: whatsAppTargetPhone || completedSaleResult.customer?.phone || '',
+      invoiceNumber: completedSaleResult.invoiceNumber,
+      storeName: business?.name || 'Green Mart Kirana',
+      storePhone: business?.phone || '+91 98765 43210',
+      items: completedSaleResult.items || [],
+      subtotal: completedSaleResult.sale?.subtotal || completedSaleResult.total,
+      discount: completedSaleResult.sale?.discountAmount || 0,
+      tax: completedSaleResult.sale?.taxAmount || 0,
+      total: completedSaleResult.total,
+      customerName: completedSaleResult.customer?.name || 'Valued Customer',
+      date: completedSaleResult.sale?.createdAt || new Date(),
+      upiId: business?.upiId || '',
+      footerNote: business?.capabilities?.receiptFooter || 'Free Home Delivery: +91 98765 43210',
+      invoiceUrl
+    });
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedReceipt(true);
+      setTimeout(() => setCopiedReceipt(false), 2500);
+    }
   };
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] flex flex-col gap-3 pb-16 md:pb-0">
+    <div className="h-full md:h-[calc(100dvh-7.25rem)] max-h-[calc(100dvh-7.25rem)] flex flex-col gap-3 overflow-hidden pb-16 md:pb-0">
       
       {/* Mobile Tab Switcher */}
       <div className="flex md:hidden bg-slate-200/80 p-1 rounded-xl shrink-0">
@@ -580,72 +791,181 @@ export default function POSPage() {
       </div>
 
       {/* Main split grid: Left (Products Search results), Right (Cart) */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
         
-        {/* Left Side: Product Search Selection Grid */}
-        <div className={`md:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-4 overflow-y-auto flex-col ${mobileView === 'cart' ? 'hidden md:flex' : 'flex'}`}>
+        {/* Left Side: Product Search Selection Grid / Quick Frequently Bought Items */}
+        <div className={`md:col-span-2 bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 flex flex-col h-full min-h-0 overflow-hidden ${mobileView === 'cart' ? 'hidden md:flex' : 'flex'}`}>
           {searchLoading ? (
-            <div className="flex-1 flex justify-center items-center gap-2 text-slate-500 text-sm font-semibold py-12">
-              <Loader2 className="animate-spin text-indigo-600" size={20} /> Querying catalog database...
-            </div>
-          ) : searchQuery.trim().length <= 1 ? (
-            <div className="flex-1 flex flex-col justify-center items-center text-center text-slate-400 space-y-2 py-8">
-              <ShoppingCart size={40} className="text-slate-300" />
-              <h3 className="font-bold text-slate-700">POS Billing Register</h3>
-              <p className="text-xs font-semibold text-slate-400 max-w-xs leading-relaxed">
-                Scan product barcodes with a scanner gun or type in product details to load items to checkout.
-              </p>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="flex-1 flex flex-col justify-center items-center text-center text-slate-400 py-10">
-              <AlertCircle size={28} className="text-slate-300 mb-2" />
-              <span>No products found matching query.</span>
+            <div className="flex-1 flex justify-center items-center gap-2 text-slate-500 text-sm font-semibold py-16">
+              <Loader2 className="animate-spin text-indigo-600" size={22} /> Loading catalog items...
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {products.map(prod => {
-                const stock = prod.inventory?.quantity || 0;
-                const isOut = stock <= 0;
-                return (
-                  <div 
-                    key={prod.id}
-                    onClick={() => !isOut && addToCart(prod)}
-                    className={`border border-slate-100 p-3 rounded-lg flex flex-col gap-2 transition-all text-xs font-semibold select-none cursor-pointer ${
-                      isOut ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'hover:border-indigo-400 hover:shadow-sm bg-white active:scale-98'
-                    }`}
-                  >
-                    <div className="h-20 bg-slate-50 rounded border border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-                      {prod.imageUrl ? (
-                        <img src={prod.imageUrl} className="h-full w-full object-cover" alt="" />
-                      ) : (
-                        <ShoppingCart className="text-slate-300" size={20} />
+            (() => {
+              const categoriesList = ['ALL', ...new Set(products.map(p => p.category?.name).filter(Boolean))];
+              const filteredProducts = posCategory === 'ALL' 
+                ? products 
+                : products.filter(p => p.category?.name === posCategory);
+
+              return (
+                <>
+                  {/* Frequently Sold & Quick Items Header & Category Filters when not actively searching */}
+                  {searchQuery.trim().length <= 1 && (
+                    <div className="flex flex-col gap-2.5 mb-4 shrink-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 shadow-2xs">
+                            <Zap size={13} className="text-amber-500 fill-amber-400" />
+                          </span>
+                          <h3 className="font-black text-slate-900 text-sm tracking-tight">
+                            Frequently Sold & Quick Items
+                          </h3>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            {filteredProducts.length} items
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 hidden sm:inline">
+                          ⚡ Tap or click to add directly to cart
+                        </span>
+                      </div>
+
+                      {/* Category Quick Filter Chips */}
+                      {categoriesList.length > 1 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                          {categoriesList.map(cat => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setPosCategory(cat)}
+                              className={`px-3 py-1 rounded-xl font-bold text-xs shrink-0 transition-all cursor-pointer ${
+                                posCategory === cat
+                                  ? 'bg-indigo-600 text-white shadow-xs'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {cat === 'ALL' ? '⭐ All Items' : tc(cat) || cat}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
+                  )}
 
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-slate-800 line-clamp-2 leading-tight">{tp(prod.name)}</h4>
-                        <span className="text-[10px] text-slate-400 font-bold mt-0.5 block">{tb(prod.brand) || '—'}</span>
-                      </div>
+                  {/* Active Search Query Header */}
+                  {searchQuery.trim().length > 1 && (
+                    <div className="flex items-center justify-between mb-3 shrink-0">
+                      <span className="text-xs font-bold text-slate-700">
+                        Search results for &ldquo;{searchQuery}&rdquo;
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        {filteredProducts.length} items found
+                      </span>
+                    </div>
+                  )}
 
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="font-extrabold text-slate-900 text-sm">{formatCurrency(prod.sellingPrice)}</span>
-                        {isOut ? (
-                          <span className="text-red-500 font-extrabold uppercase text-[9px] bg-red-50 px-1 rounded">{ts('OUT_OF_STOCK')}</span>
-                        ) : (
-                          <span className="text-slate-500 font-bold">{t('common.quantity')}: {stock}</span>
-                        )}
+                  {/* Products Grid Container with Independent Scroll */}
+                  {filteredProducts.length === 0 ? (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center text-slate-400 py-12">
+                      <AlertCircle size={32} className="text-slate-300 mb-2" />
+                      <span className="text-sm font-semibold text-slate-600">No products found.</span>
+                      <p className="text-xs text-slate-400 mt-1">Try another search term or select &ldquo;All Items&rdquo;.</p>
+                    </div>
+                  ) : (
+                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1.5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {filteredProducts.map(prod => {
+                          const stock = prod.inventory?.quantity || 0;
+                          const isOut = stock <= 0;
+                          const cartItem = cart.find(i => i.id === prod.id);
+                          const qtyInCart = cartItem ? cartItem.quantity : 0;
+
+                          return (
+                            <div 
+                              key={prod.id}
+                              onClick={() => !isOut && addToCart(prod)}
+                              className={`group relative border p-3 rounded-xl flex flex-col justify-between gap-2.5 transition-all text-xs font-semibold select-none cursor-pointer ${
+                                isOut 
+                                  ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200' 
+                                  : qtyInCart > 0
+                                  ? 'bg-indigo-50/40 border-indigo-300 shadow-xs ring-1 ring-indigo-200 hover:border-indigo-400 active:scale-98'
+                                  : 'bg-white border-slate-200/90 hover:border-indigo-300 hover:shadow-md active:scale-98'
+                              }`}
+                            >
+                              {/* In-cart badge indicator */}
+                              {qtyInCart > 0 && (
+                                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                                  <span>{qtyInCart} in cart</span>
+                                </div>
+                              )}
+
+                              {/* Square Aspect Ratio Product Image */}
+                              <div 
+                                className="aspect-square w-full bg-slate-50/80 rounded-xl border border-slate-100/90 overflow-hidden flex items-center justify-center p-2 shrink-0 group-hover:scale-102 transition-transform"
+                                style={{ aspectRatio: '1 / 1' }}
+                              >
+                                {prod.imageUrl ? (
+                                  <img 
+                                    src={prod.imageUrl} 
+                                    className="w-full h-full object-contain aspect-square" 
+                                    alt={prod.name} 
+                                    loading="lazy"
+                                    style={{ aspectRatio: '1 / 1' }}
+                                  />
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center text-slate-400 gap-1 aspect-square" style={{ aspectRatio: '1 / 1' }}>
+                                    <ShoppingCart className="text-slate-300" size={26} />
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{tc(prod.category?.name) || 'Kirana'}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                  <h4 className="font-bold text-slate-900 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+                                    {tp(prod.name)}
+                                  </h4>
+                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5 block truncate">
+                                    {tb(prod.brand) || '—'}
+                                  </span>
+                                </div>
+
+                                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                  <span className="font-black text-slate-900 text-sm">
+                                    {formatCurrency(prod.sellingPrice)}
+                                  </span>
+                                  
+                                  {isOut ? (
+                                    <span className="text-red-600 font-extrabold uppercase text-[9px] bg-red-50 px-1.5 py-0.5 rounded">
+                                      {ts('OUT_OF_STOCK')}
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        addToCart(prod);
+                                      }}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white transition-colors"
+                                    >
+                                      <Plus size={12} />
+                                      <span>Add</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                </>
+              );
+            })()
           )}
         </div>
 
-        {/* Right Side: Active Cart */}
-        <div className={`bg-white border border-slate-200 rounded-xl shadow-sm flex-col overflow-hidden ${mobileView === 'catalog' ? 'hidden md:flex' : 'flex'}`}>
+        {/* Right Side: Active Cart (Pinned and Independently Scrollable) */}
+        <div className={`md:col-span-1 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden sticky top-0 ${mobileView === 'catalog' ? 'hidden md:flex' : 'flex'}`}>
           <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
             <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
               <ShoppingCart size={16} /> Checkout Cart ({cart.reduce((sum, i) => sum + i.quantity, 0)})
@@ -661,7 +981,7 @@ export default function POSPage() {
           </div>
 
           {/* Cart items list */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 px-4">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-slate-100 px-4">
             {cart.length === 0 ? (
               <div className="h-full flex flex-col justify-center items-center text-slate-400 text-xs font-semibold py-12">
                 <span>{t('pos.cartEmpty')}</span>
@@ -1054,21 +1374,21 @@ export default function POSPage() {
 
       {/* SUCCESSFUL CHECKOUT SCREEN OVERLAY */}
       {completedSaleResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 p-6 text-center space-y-5 text-sm font-semibold select-none animate-in fade-in zoom-in-95 duration-200">
-            <div className="mx-auto h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-xs">
-              <CheckCircle size={32} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 p-4 sm:p-6 text-center space-y-4 sm:space-y-5 text-sm font-semibold select-none animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[96vh] overflow-y-auto">
+            <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-xs">
+              <CheckCircle size={30} className="sm:size-8" />
             </div>
             
             <div className="space-y-1">
-              <h3 className="text-xl font-black text-slate-900">Sale Completed Successfully!</h3>
+              <h3 className="text-lg sm:text-xl font-black text-slate-900">Sale Completed Successfully!</h3>
               <p className="text-xs text-slate-500 font-bold">Invoice #{completedSaleResult.invoiceNumber}</p>
             </div>
 
-            <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 space-y-2 text-left">
+            <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 sm:p-4 space-y-2 text-left">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Customer</span>
-                <span className="font-bold text-slate-900">{completedSaleResult.customer?.name || 'Walk-in Customer'}</span>
+                <span className="font-bold text-slate-900 truncate max-w-[180px]">{completedSaleResult.customer?.name || 'Walk-in Customer'}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Items Purchased</span>
@@ -1087,29 +1407,69 @@ export default function POSPage() {
               )}
             </div>
 
-            {/* Success checkout Actions */}
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            {/* Image/Share Toast Notification */}
+            {imageSharedToast && (
+              <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center justify-center gap-2 animate-in fade-in">
+                <Check size={14} className="text-emerald-600 shrink-0" />
+                <span>{imageSharedToast}</span>
+              </div>
+            )}
+
+            {/* Primary checkout Actions */}
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1">
               <button
                 type="button"
                 onClick={printReceipt}
                 disabled={isPrintingDirect}
-                className="flex items-center justify-center gap-1 px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[11px] sm:text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
-                <Printer size={14} /> {isPrintingDirect ? 'Printing...' : 'Direct Print'}
+                <Printer size={14} className="shrink-0" /> <span className="truncate">{isPrintingDirect ? 'Printing...' : 'Direct Print'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDirectShare}
+                className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] sm:text-xs font-extrabold transition-all shadow-sm shadow-emerald-200 cursor-pointer"
+                title="Directly share bill via WhatsApp or System Share"
+              >
+                <Share2 size={14} className="shrink-0" /> <span className="truncate">Share Bill</span>
               </button>
               <button
                 type="button"
                 onClick={() => setReceiptModalOpen(true)}
-                className="flex items-center justify-center gap-1 px-2 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2.5 border border-slate-200 hover:bg-slate-100 text-slate-700 bg-white rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
-                <Eye size={14} className="text-indigo-600" /> Preview
+                <Eye size={14} className="text-indigo-600 shrink-0" /> <span className="truncate">Preview Slip</span>
               </button>
-              <button
-                type="button"
-                onClick={shareWhatsAppInvoice}
-                className="flex items-center justify-center gap-1 px-2 py-2.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+            </div>
+
+            {/* Secondary Quick Actions */}
+            <div className="flex items-center justify-center gap-2.5 sm:gap-4 text-xs font-bold text-slate-500 pt-0.5 flex-wrap">
+              <button 
+                type="button" 
+                onClick={handleOpenPdf}
+                className="hover:text-indigo-600 flex items-center gap-1 transition-colors cursor-pointer"
+                title="View / Save PDF Invoice"
               >
-                <Share2 size={14} className="text-emerald-600" /> WhatsApp
+                <FileText size={13} className="text-indigo-500" /> Save PDF
+              </button>
+              <span className="text-slate-300">•</span>
+              <button 
+                type="button" 
+                onClick={() => shareWhatsAppInvoice(whatsAppTargetPhone)}
+                className="hover:text-emerald-600 flex items-center gap-1 transition-colors cursor-pointer"
+                title="Open invoice in WhatsApp"
+              >
+                <Share2 size={13} className="text-emerald-500" /> WhatsApp
+              </button>
+              <span className="text-slate-300">•</span>
+              <button 
+                type="button" 
+                onClick={copyReceiptText}
+                className="hover:text-slate-900 flex items-center gap-1 transition-colors cursor-pointer"
+                title="Copy receipt link & summary to clipboard"
+              >
+                {copiedReceipt ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                <span>{copiedReceipt ? 'Copied!' : 'Copy Link'}</span>
               </button>
             </div>
 
